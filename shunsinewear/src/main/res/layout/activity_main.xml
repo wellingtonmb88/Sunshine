@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.wearable.view.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimary"
+    tools:context="br.com.shunsinewear.MainActivity"
+    tools:deviceIds="wear">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextClock
+            android:id="@+id/clock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:format12Hour="HH:mm"
+            android:gravity="center"
+            android:paddingBottom="4dp"
+            android:paddingTop="16dp"
+            android:textColor="@android:color/white"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            app:layout_box="all" />
+
+        <TextView
+            android:id="@+id/formatted_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:paddingTop="4dp"
+            android:textColor="@android:color/white"
+            tools:text="FRI, JUL 14 2015" />
+
+        <View
+            android:layout_width="50dp"
+            android:layout_height="1dp"
+            android:layout_marginBottom="4dp"
+            android:layout_marginTop="16dp"
+            android:background="#70FFFFFF" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingBottom="16dp"
+            android:paddingTop="4dp">
+
+            <ImageView
+                android:id="@+id/weather_icon"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="4dp"
+                android:src="@mipmap/ic_launcher" />
+
+            <TextView
+                android:id="@+id/weather_temp_max"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:textColor="@android:color/white"
+                android:textSize="24sp"
+                tools:text="36˚" />
+
+            <TextView
+                android:id="@+id/weather_temp_min"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                tools:text="16˚" />
+        </LinearLayout>
+    </LinearLayout>
+
+</android.support.wearable.view.BoxInsetLayout>
