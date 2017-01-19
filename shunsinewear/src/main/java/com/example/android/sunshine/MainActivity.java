@@ -1,20 +1,8 @@
 package com.example.android.sunshine;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.Asset;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEvent;
-import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.DataItem;
-import com.google.android.gms.wearable.DataMap;
-import com.google.android.gms.wearable.DataMapItem;
-import com.google.android.gms.wearable.Wearable;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.wearable.activity.WearableActivity;
@@ -23,10 +11,27 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.Asset;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
+
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends WearableActivity implements
         DataApi.DataListener,
@@ -78,6 +83,7 @@ public class MainActivity extends WearableActivity implements
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(TAG, "onConnected: GoogleApiClient");
         Wearable.DataApi.addListener(mGoogleApiClient, this);
+        requestForWeatherInfo();
     }
 
     @Override
@@ -100,21 +106,41 @@ public class MainActivity extends WearableActivity implements
                     DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
                     updateDisplay(dataMap);
                 }
-            } else if (event.getType() == DataEvent.TYPE_DELETED) {
-                // DataItem deleted
             }
         }
     }
 
     private void updateDisplay(final DataMap dataMap) {
-        final double maxTemp = dataMap.getDouble("MAX_TEMP");
-        final double minTemp = dataMap.getDouble("MIN_TEMP");
         final Asset profileAsset = dataMap.getAsset("WEATHER_ICON");
         loadBitmapFromAsset(profileAsset);
-
-        mWeatherTempMax.setText(String.valueOf(maxTemp));
-        mWeatherTempMin.setText(String.valueOf(minTemp));
+        mWeatherTempMax.setText(dataMap.getString("MAX_TEMP"));
+        mWeatherTempMin.setText(dataMap.getString("MIN_TEMP"));
     }
+
+
+    private void requestForWeatherInfo() {
+        final PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/mobile-data-changed");
+        putDataMapReq.setUrgent();
+
+        double randomDouble = new Random().nextDouble();
+        final DataMap dataMap = putDataMapReq.getDataMap();
+
+        dataMap.putDouble("RENEW_PATH_DATA", randomDouble);
+        dataMap.putString("UPDATE_WEATHER", "UPDATE_WEATHER");
+
+        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+        PendingResult<DataApi.DataItemResult> pendingResult =
+                Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+            @Override
+            public void onResult(@NonNull final DataApi.DataItemResult result) {
+                if (result.getStatus().isSuccess()) {
+                    Log.d(TAG, "Data item set: " + result.getDataItem().getUri());
+                }
+            }
+        });
+    }
+
 
     private String formattedDateFromString() {
         final Date date = new Date();
@@ -133,14 +159,13 @@ public class MainActivity extends WearableActivity implements
         if (asset == null) {
             throw new IllegalArgumentException("Asset must be non-null");
         }
-        new Handler().post(new Runnable() {
+
+        final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
-                ConnectionResult result =
-                        mGoogleApiClient.blockingConnect(300, TimeUnit.MILLISECONDS);
-                if (!result.isSuccess()) {
-                    return;
-                }
+
                 // convert asset into a file descriptor and block until it's ready
                 final InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
                         mGoogleApiClient, asset).await().getInputStream();

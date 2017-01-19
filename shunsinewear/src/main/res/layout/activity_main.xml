@@ -6,7 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimary"
-    tools:context="br.com.shunsinewear.MainActivity"
     tools:deviceIds="wear">
 
     <LinearLayout
@@ -41,7 +40,7 @@
             android:layout_width="50dp"
             android:layout_height="1dp"
             android:layout_marginBottom="4dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="4dp"
             android:background="#70FFFFFF" />
 
         <LinearLayout
@@ -49,8 +48,8 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="horizontal"
-            android:paddingBottom="16dp"
-            android:paddingTop="4dp">
+            android:layout_marginBottom="16dp"
+            android:layout_marginTop="4dp">
 
             <ImageView
                 android:id="@+id/weather_icon"
@@ -58,6 +57,7 @@
                 android:layout_height="50dp"
                 android:layout_margin="4dp"
                 android:visibility="gone"
+                tools:visibility="visible"
                 android:src="@mipmap/ic_launcher" />
 
             <TextView
