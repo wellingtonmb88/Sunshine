@@ -22,14 +22,11 @@ android {
 }
 
 dependencies {
-    final PLAY_SERVICES_VERSION = '9.8.0'
+    final PLAY_SERVICES_VERSION = '10.0.1'
     final SUPPORT_LIB_VERSION = '25.1.0'
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
     wearApp project(':shunsinewear')
-
-
-
 
 // App Dependencies
     compile "com.android.support:support-v4:$SUPPORT_LIB_VERSION"
@@ -37,11 +34,11 @@ dependencies {
     compile "com.android.support:appcompat-v7:$SUPPORT_LIB_VERSION"
     compile "com.android.support:recyclerview-v7:$SUPPORT_LIB_VERSION"
     compile "com.android.support:design:$SUPPORT_LIB_VERSION"
-    compile 'com.android.support:preference-v7:25.0.1'
+    compile "com.android.support:preference-v7:$SUPPORT_LIB_VERSION"
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta3'
 
     // Google Play Services Dependencies
-    compile 'com.google.android.gms:play-services-wearable:9.8.0'
+    compile "com.google.android.gms:play-services-wearable:$PLAY_SERVICES_VERSION"
 
     compile 'com.firebase:firebase-jobdispatcher:0.5.0'
     // Instrumentation dependencies use androidTestCompile

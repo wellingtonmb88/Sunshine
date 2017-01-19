@@ -15,8 +15,19 @@
  */
 package com.example.android.sunshine;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.Asset;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
+
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -37,14 +48,7 @@ import android.widget.ProgressBar;
 import com.example.android.sunshine.data.SunshinePreferences;
 import com.example.android.sunshine.data.WeatherContract;
 import com.example.android.sunshine.sync.SunshineSyncUtils;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
-import com.google.android.gms.wearable.Wearable;
+import com.example.android.sunshine.utilities.ImageUtils;
 
 public class MainActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor>,
@@ -80,7 +84,6 @@ public class MainActivity extends AppCompatActivity implements
     public static final int INDEX_WEATHER_MIN_TEMP = 2;
     public static final int INDEX_WEATHER_CONDITION_ID = 3;
 
-
     /*
      * This ID will be used to identify the Loader responsible for loading our weather forecast. In
      * some cases, one Activity can deal with many Loaders. However, in our case, there is only one.
@@ -95,7 +98,6 @@ public class MainActivity extends AppCompatActivity implements
     private int mPosition = RecyclerView.NO_POSITION;
 
     private ProgressBar mLoadingIndicator;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,7 +161,6 @@ public class MainActivity extends AppCompatActivity implements
         /* Setting the adapter attaches it to the RecyclerView in our layout. */
         mRecyclerView.setAdapter(mForecastAdapter);
 
-
         showLoading();
 
         /*
@@ -170,7 +171,6 @@ public class MainActivity extends AppCompatActivity implements
         getSupportLoaderManager().initLoader(ID_FORECAST_LOADER, null, this);
 
         SunshineSyncUtils.initialize(this);
-
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -183,7 +183,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-
         mGoogleApiClient.connect();
     }
 
@@ -212,14 +211,13 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
-     * Uses the URI scheme for showing a location found on a map in conjunction with
-     * an implicit Intent. This super-handy Intent is detailed in the "Common Intents" page of
-     * Android's developer site:
+     * Uses the URI scheme for showing a location found on a map in conjunction with an implicit
+     * Intent. This super-handy Intent is detailed in the "Common Intents" page of Android's
+     * developer site:
      *
-     * @see "http://developer.android.com/guide/components/intents-common.html#Maps"
-     * <p>
-     * Protip: Hold Command on Mac or Control on Windows and click that link to automagically
-     * open the Common Intents page
+     * @see "http://developer.android.com/guide/components/intents-common.html#Maps" <p> Protip:
+     * Hold Command on Mac or Control on Windows and click that link to automagically open the
+     * Common Intents page
      */
     private void openPreferredLocationInMap() {
         double[] coords = SunshinePreferences.getLocationCoordinates(this);
@@ -249,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
 
-
         switch (loaderId) {
 
             case ID_FORECAST_LOADER:
@@ -277,20 +274,16 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
-     * Called when a Loader has finished loading its data.
-     * <p>
-     * NOTE: There is one small bug in this code. If no data is present in the cursor do to an
-     * initial load being performed with no access to internet, the loading indicator will show
-     * indefinitely, until data is present from the ContentProvider. This will be fixed in a
-     * future version of the course.
+     * Called when a Loader has finished loading its data. <p> NOTE: There is one small bug in this
+     * code. If no data is present in the cursor do to an initial load being performed with no
+     * access to internet, the loading indicator will show indefinitely, until data is present from
+     * the ContentProvider. This will be fixed in a future version of the course.
      *
      * @param loader The Loader that has finished.
      * @param data   The data generated by the Loader.
      */
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
-
         mForecastAdapter.swapCursor(data);
         if (mPosition == RecyclerView.NO_POSITION) mPosition = 0;
         mRecyclerView.smoothScrollToPosition(mPosition);
@@ -328,10 +321,8 @@ public class MainActivity extends AppCompatActivity implements
 
     /**
      * This method will make the View for the weather data visible and hide the error message and
-     * loading indicator.
-     * <p>
-     * Since it is okay to redundantly set the visibility of a View, we don't need to check whether
-     * each view is currently visible or invisible.
+     * loading indicator. <p> Since it is okay to redundantly set the visibility of a View, we don't
+     * need to check whether each view is currently visible or invisible.
      */
     private void showWeatherDataView() {
         /* First, hide the loading indicator */
@@ -342,10 +333,8 @@ public class MainActivity extends AppCompatActivity implements
 
     /**
      * This method will make the loading indicator visible and hide the weather View and error
-     * message.
-     * <p>
-     * Since it is okay to redundantly set the visibility of a View, we don't need to check whether
-     * each view is currently visible or invisible.
+     * message. <p> Since it is okay to redundantly set the visibility of a View, we don't need to
+     * check whether each view is currently visible or invisible.
      */
     private void showLoading() {
         /* Then, hide the weather data */
@@ -358,8 +347,8 @@ public class MainActivity extends AppCompatActivity implements
      * This is where we inflate and set up the menu for this Activity.
      *
      * @param menu The options menu in which you place your items.
-     * @return You must return true for the menu to be displayed;
-     * if you return false it will not be shown.
+     * @return You must return true for the menu to be displayed; if you return false it will not be
+     * shown.
      * @see #onPrepareOptionsMenu
      * @see #onOptionsItemSelected
      */
@@ -398,17 +387,35 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-//        Wearable.DataApi.addListener(mGoogleApiClient, this);
-        increaseCounter();
+        Log.d(TAG, "onConnected: GoogleApiClient");
+//        NotificationUtils.notifyWearOfNewWeather(this, mGoogleApiClient);
+        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/wear-data-changed");
+        Bitmap largeIcon = ImageUtils.getBitmap(this, R.drawable.art_clouds);
+        final Asset asset = ImageUtils.createAssetFromBitmap(largeIcon);
+        putDataMapReq.getDataMap().putDouble("MAX_TEMP", 222);
+        putDataMapReq.getDataMap().putDouble("MIN_TEMP", 11);
+//        putDataMapReq.getDataMap().putAsset("WEATHER_ICON", asset);
+
+        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+        PendingResult<DataApi.DataItemResult> pendingResult =
+                Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+            @Override
+            public void onResult(@NonNull final DataApi.DataItemResult result) {
+                if (result.getStatus().isSuccess()) {
+                    Log.d(TAG, "Data item set: " + result.getDataItem().getUri());
+                }
+            }
+        });
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-
+        Log.d(TAG, "onConnectionSuspended: GoogleApiClient");
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        Log.d(TAG, "onConnectionFailed: GoogleApiClient");
     }
 }

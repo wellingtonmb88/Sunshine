@@ -1,17 +1,8 @@
 package com.example.android.sunshine;
 
-import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.wearable.activity.WearableActivity;
-import android.support.wearable.view.BoxInsetLayout;
-import android.util.Log;
-import android.widget.ImageView;
-import android.widget.TextClock;
-import android.widget.TextView;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
@@ -20,29 +11,35 @@ import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.wearable.activity.WearableActivity;
+import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends WearableActivity implements
         DataApi.DataListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
-    private static final String COUNT_KEY = "com.example.key.count";
+    private static final String TAG = MainActivity.class.getSimpleName();
 
-    private GoogleApiClient mGoogleApiClient;
-    private int count = 0;
-
-    private static final SimpleDateFormat AMBIENT_DATE_FORMAT =
-            new SimpleDateFormat("HH:mm", Locale.US);
-
-    private BoxInsetLayout mContainerView;
-    private TextView mFomattedDate;
     private TextView mWeatherTempMax;
     private TextView mWeatherTempMin;
     private ImageView mWeatherIcon;
-    private TextClock mClockView;
+
+    private GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,15 +47,12 @@ public class MainActivity extends WearableActivity implements
         setContentView(R.layout.activity_main);
         setAmbientEnabled();
 
-        mContainerView = (BoxInsetLayout) findViewById(R.id.container);
-        mFomattedDate = (TextView) findViewById(R.id.formatted_date);
+        final TextView formattedDate = (TextView) findViewById(R.id.formatted_date);
         mWeatherTempMax = (TextView) findViewById(R.id.weather_temp_max);
         mWeatherTempMin = (TextView) findViewById(R.id.weather_temp_min);
         mWeatherIcon = (ImageView) findViewById(R.id.weather_icon);
-        mClockView = (TextClock) findViewById(R.id.clock);
-        String dateFromString = formattedDateFromString("", "", "");
 
-        mFomattedDate.setText(dateFromString);
+        formattedDate.setText(formattedDateFromString());
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
@@ -70,7 +64,6 @@ public class MainActivity extends WearableActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-
         mGoogleApiClient.connect();
     }
 
@@ -81,80 +74,21 @@ public class MainActivity extends WearableActivity implements
         mGoogleApiClient.disconnect();
     }
 
-    public static String formattedDateFromString(String inputFormat, String outputFormat, String inputDate) {
-        if (inputFormat.equals("")) { // if inputFormat = "", set a default input format.
-            inputFormat = "yyyy-MM-dd hh:mm:ss";
-        }
-        if (outputFormat.equals("")) {
-            outputFormat = "EE',' MMM d yyyy"; // if inputFormat = "", set a default output format.
-        }
-        Date parsed = new Date();
-        String outputDate = "";
-
-        SimpleDateFormat df_input = new SimpleDateFormat(inputFormat, java.util.Locale.getDefault());
-        SimpleDateFormat df_output = new SimpleDateFormat(outputFormat, java.util.Locale.getDefault());
-
-        // You can set a different Locale, This example set a locale of Country Mexico.
-        //SimpleDateFormat df_input = new SimpleDateFormat(inputFormat, new Locale("es", "MX"));
-        //SimpleDateFormat df_output = new SimpleDateFormat(outputFormat, new Locale("es", "MX"));
-
-        try {
-//            parsed = df_input.parse(inputDate);
-            outputDate = df_output.format(parsed);
-        } catch (Exception e) {
-            Log.e("formattedDateFromString", "Exception in formateDateFromstring(): " + e.getMessage());
-        }
-        return outputDate.toUpperCase();
-
-    }
-
-    @Override
-    public void onEnterAmbient(Bundle ambientDetails) {
-        super.onEnterAmbient(ambientDetails);
-        updateDisplay();
-    }
-
-    @Override
-    public void onUpdateAmbient() {
-        super.onUpdateAmbient();
-        updateDisplay();
-    }
-
-    @Override
-    public void onExitAmbient() {
-        updateDisplay();
-        super.onExitAmbient();
-    }
-
-    private void updateDisplay() {
-//        if (isAmbient()) {
-//            mContainerView.setBackgroundColor(getResources().getColor(android.R.color.black));
-//            mTextView.setTextColor(getResources().getColor(android.R.color.white));
-//            mClockView.setVisibility(View.VISIBLE);
-//
-//            mClockView.setText(AMBIENT_DATE_FORMAT.format(new Date()));
-//        } else {
-//            mContainerView.setBackground(null);
-//            mTextView.setTextColor(getResources().getColor(android.R.color.black));
-//            mClockView.setVisibility(View.GONE);
-//        }
-    }
-
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, "onConnected: GoogleApiClient");
         Wearable.DataApi.addListener(mGoogleApiClient, this);
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-
+        Log.d(TAG, "onConnectionSuspended: GoogleApiClient");
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        Log.d(TAG, "onConnectionFailed: GoogleApiClient - " + connectionResult);
     }
-
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
@@ -164,7 +98,7 @@ public class MainActivity extends WearableActivity implements
                 DataItem item = event.getDataItem();
                 if (item.getUri().getPath().compareTo("/wear-data-changed") == 0) {
                     DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                    updateCount(dataMap.getInt(COUNT_KEY));
+                    updateDisplay(dataMap);
                 }
             } else if (event.getType() == DataEvent.TYPE_DELETED) {
                 // DataItem deleted
@@ -172,8 +106,59 @@ public class MainActivity extends WearableActivity implements
         }
     }
 
-    // Our method to update the count
-    private void updateCount(int c) {
+    private void updateDisplay(final DataMap dataMap) {
+        final double maxTemp = dataMap.getDouble("MAX_TEMP");
+        final double minTemp = dataMap.getDouble("MIN_TEMP");
+        final Asset profileAsset = dataMap.getAsset("WEATHER_ICON");
+        loadBitmapFromAsset(profileAsset);
 
+        mWeatherTempMax.setText(String.valueOf(maxTemp));
+        mWeatherTempMin.setText(String.valueOf(minTemp));
+    }
+
+    private String formattedDateFromString() {
+        final Date date = new Date();
+
+        final SimpleDateFormat dateFormat =
+                new SimpleDateFormat("EE',' MMM d yyyy", java.util.Locale.getDefault());
+        try {
+            return dateFormat.format(date).toUpperCase();
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in formateDateFromstring(): " + e.getMessage());
+        }
+        return "";
+    }
+
+    private void loadBitmapFromAsset(final Asset asset) {
+        if (asset == null) {
+            throw new IllegalArgumentException("Asset must be non-null");
+        }
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                ConnectionResult result =
+                        mGoogleApiClient.blockingConnect(300, TimeUnit.MILLISECONDS);
+                if (!result.isSuccess()) {
+                    return;
+                }
+                // convert asset into a file descriptor and block until it's ready
+                final InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
+                        mGoogleApiClient, asset).await().getInputStream();
+
+                if (assetInputStream == null) {
+                    Log.w(TAG, "Requested an unknown Asset.");
+                    return;
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // decode the stream into a bitmap
+                        final Bitmap bitmap = BitmapFactory.decodeStream(assetInputStream);
+                        mWeatherIcon.setVisibility(View.VISIBLE);
+                        mWeatherIcon.setImageBitmap(bitmap);
+                    }
+                });
+            }
+        });
     }
 }
