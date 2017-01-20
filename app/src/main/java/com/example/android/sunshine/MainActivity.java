@@ -40,29 +40,15 @@ import com.example.android.sunshine.sync.SunshineSyncUtils;
 import com.example.android.sunshine.utilities.NotificationUtils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEvent;
-import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.DataItem;
-import com.google.android.gms.wearable.DataMap;
-import com.google.android.gms.wearable.DataMapItem;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 public class MainActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor>,
         ForecastAdapter.ForecastAdapterOnClickHandler,
-        DataApi.DataListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
-    private static final String COUNT_KEY = "com.example.key.count";
-
     private GoogleApiClient mGoogleApiClient;
-    private int count = 0;
 
     private final String TAG = MainActivity.class.getSimpleName();
 
@@ -193,24 +179,6 @@ public class MainActivity extends AppCompatActivity implements
     protected void onPause() {
         super.onPause();
         mGoogleApiClient.disconnect();
-    }
-
-    // Create a data map and put data in it
-    private void increaseCounter() {
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/wear-data-changed");
-        putDataMapReq.setUrgent();
-        putDataMapReq.getDataMap().putInt(COUNT_KEY, count++);
-        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-        PendingResult<DataApi.DataItemResult> pendingResult =
-                Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-            @Override
-            public void onResult(@NonNull final DataApi.DataItemResult result) {
-                if (result.getStatus().isSuccess()) {
-                    Log.d(TAG, "Data item set: " + result.getDataItem().getUri());
-                }
-            }
-        });
     }
 
     /**
@@ -392,7 +360,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(TAG, "onConnected: GoogleApiClient");
-        Wearable.DataApi.addListener(mGoogleApiClient, this);
     }
 
     @Override
@@ -403,22 +370,5 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d(TAG, "onConnectionFailed: GoogleApiClient");
-    }
-
-    @Override
-    public void onDataChanged(DataEventBuffer dataEvents) {
-        for (DataEvent event : dataEvents) {
-            if (event.getType() == DataEvent.TYPE_CHANGED) {
-                // DataItem changed
-                DataItem item = event.getDataItem();
-                if (item.getUri().getPath().compareTo("/mobile-data-changed") == 0) {
-                    DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                    String updateWeather = dataMap.getString("UPDATE_WEATHER");
-                    if (updateWeather != null) {
-                        NotificationUtils.notifyWearOfNewWeather(this, mGoogleApiClient);
-                    }
-                }
-            }
-        }
     }
 }
